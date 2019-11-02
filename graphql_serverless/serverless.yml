@@ -2,16 +2,19 @@ service: wetodos
 app: wetodos
 org: anxing
 
+
 provider:
   runtime: nodejs10.x
+  stage: 'prod'
   name: aws
+#  region: ap-east-1 # default is us-east-1
   environment:
-    NODE_ENV: ${env:NODE_ENV,  'dev'}
+    NODE_ENV: ${self:provider.stage,  'dev'}
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
-    JWT_PRIVATE_KEY: ${env:JWT_PRIVATE_KEY}
-    JWT_PUBLIC_KEY: ${env:JWT_PUBLIC_KEY}
-    WX_APPID: ${env:WX_APPID, 'wx191e49fa78da996f'}
-    WX_SECRET: ${env:WX_SECRET, '15c91641d2483d95de4a5eb92bba365a'}
+    WX_APPID: ${param:wxAppId}
+    WX_SECRET: ${param:wxSecret}
+    JWT_PRIVATE_KEY: ${param:jwtPriKey}
+    JWT_PUBLIC_KEY: ${param:jwtPubKey}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -21,27 +24,25 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+        - dynamodb:DescribeTable
+#      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:*"
+
+package:
+  exclude: # 在打包是排除无用的文件
+    - tmp/**
+    - .dynamodb/**
+    - .vscode/**
+    - test/**
+    - .idea
+    - .git
+    - serverless.yaml
+    - logs
+    - Dockerfile
+    - ssh/**
+    - README.md
 
 functions:
-  hello:
-    handler: src/handler.hello # restful api handler
-    events:
-      - http:
-          path: hello
-          method: get
-          cors: true
-  graphql-handler:
-    handler: src/graphql-handler.graphqlHandler # Apollo GraphQL handler
-    events:
-      - http:
-          path: graphql
-          method: post
-          cors: true
-      - http:
-          path: graphql
-          method: get
-          cors: true
   public-graphql-handler:
     handler: src/graphql/public/handler.graphqlHandler # 公共模块入口，eg: register\login
     events:
@@ -65,19 +66,14 @@ functions:
           method: get
           cors: true
 
-plugins:
-  - serverless-dynamodb-local
-  - serverless-offline
-
 custom:
   dynamodb:
     stages:
       - dev
     start:
       port: 8000
-#      inMemory: true
+      inMemory: true
       migrate: true
-      dbPath: ${env:PWD}/tmp
     migration:
       dir: offline/migrations
 
@@ -130,14 +126,14 @@ resources:
             Projection:
               ProjectionType: 'ALL'
         BillingMode: PAY_PER_REQUEST
-        TableName: User_${env:NODE_ENV, 'dev'}
+        TableName: User_${self:provider.stage, 'dev'}
 
     ListDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
       Properties:
         BillingMode: PAY_PER_REQUEST
-        TableName: List_${env:NODE_ENV, 'dev'}
+        TableName: List_${self:provider.stage, 'dev'}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -164,13 +160,12 @@ resources:
             Projection:
               ProjectionType: 'ALL'
 
-
     TaskDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
       Properties:
         BillingMode: PAY_PER_REQUEST
-        TableName: Task_${env:NODE_ENV, 'dev'}
+        TableName: Task_${self:provider.stage, 'dev'}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -194,3 +189,4 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: 'ALL'
+#
