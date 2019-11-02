@@ -1,0 +1,48 @@
+{
+  "name": "WeTodos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --maxConcurrency=1 --maxWorkers=1 --forceExit --detectOpenHandles",
+    "start": "serverless offline start --skipCacheInvalidation",
+    "deploy:prod": "sls deploy --config serverless.prod.yaml",
+    "deploy:dev": "sls deploy --config serverless.dev.yaml"
+  },
+  "author": "anxing<anxing131@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "apollo-boost": "^0.4.4",
+    "apollo-link-http": "^1.5.16",
+    "chai": "^4.2.0",
+    "jest": "^24.9.0",
+    "serverless-dynamodb-local": "^0.2.38",
+    "serverless-offline": "^5.11.0",
+    "sinon": "^7.5.0",
+    "superagent-mock": "^3.7.0"
+  },
+  "dependencies": {
+    "apollo-server-lambda": "^2.9.3",
+    "aws-sdk": "^2.533.0",
+    "jsonwebtoken": "^8.5.1",
+    "pino": "^5.13.3",
+    "pino-pretty": "^3.2.1",
+    "superagent": "^5.1.0",
+    "uuid": "^3.3.3",
+    "graphql-type-json": "^0.3.0",
+    "graphql": "^14.5.7",
+    "graphql-tag": "^2.10.1"
+  },
+  "jest": {
+    "verbose": true,
+    "maxConcurrency": 1,
+    "globalSetup": "./test/globalSetup.js",
+    "globalTeardown": "./test/globalTeardown.js",
+    "setupFilesAfterEnv": [
+      "./test/setupTests.js"
+    ],
+    "setupFiles": [
+      "./test/setup.js"
+    ]
+  }
+}

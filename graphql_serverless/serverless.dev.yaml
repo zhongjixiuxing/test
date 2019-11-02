@@ -1,0 +1,191 @@
+service: wetodos
+app: wetodos
+org: anxing
+
+provider:
+  runtime: nodejs10.x
+  stage: 'dev'
+  name: aws
+#  region: ap-east-1 # default is us-east-1
+  environment:
+    NODE_ENV: ${self:provider.stage,  'dev'}
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+    WX_APPID: ${param:wxAppId}
+    WX_SECRET: ${param:wxSecret}
+    JWT_PRIVATE_KEY: ${param:jwtPriKey}
+    JWT_PUBLIC_KEY: ${param:jwtPubKey}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+#      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:*"
+
+package:
+  exclude: # 在打包是排除无用的文件
+    - tmp/**
+    - .dynamodb/**
+    - .vscode/**
+    - test/**
+    - .idea
+    - .git
+    - serverless.yaml
+    - logs
+    - Dockerfile
+    - ssh/**
+    - README.md
+
+functions:
+  public-graphql-handler:
+    handler: src/graphql/public/handler.graphqlHandler # 公共模块入口，eg: register\login
+    events:
+      - http:
+          path: public
+          method: post
+          cors: true
+      - http:
+          path: public
+          method: get
+          cors: true
+  auth-graphql-handler:
+    handler: src/graphql/auth/handler.graphqlHandler # 授权模块入口，eg: CURD Todos
+    events:
+      - http:
+          path: auth
+          method: post
+          cors: true
+      - http:
+          path: auth
+          method: get
+          cors: true
+
+custom:
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+    migration:
+      dir: offline/migrations
+
+resources:
+  Resources:
+    UserDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: wxOpenId
+            AttributeType: S
+          - AttributeName: name
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+          - AttributeName: phone
+            AttributeType: S
+
+
+        KeySchema: # 这个是table 主键定义， or 是一个table index 定义
+          - AttributeName: id
+            KeyType: HASH
+
+        GlobalSecondaryIndexes:
+          - IndexName: 'index_name'
+            KeySchema:
+              - AttributeName: 'name'
+                KeyType: HASH
+            Projection:
+              ProjectionType: 'ALL'
+          - IndexName: 'index_wxOpenId'
+            KeySchema:
+              - AttributeName: 'wxOpenId'
+                KeyType: HASH
+            Projection:
+              ProjectionType: 'ALL'
+          - IndexName: 'index_email'
+            KeySchema:
+              - AttributeName: 'email'
+                KeyType: HASH
+            Projection:
+              ProjectionType: 'ALL'
+          - IndexName: 'index_phone'
+            KeySchema:
+              - AttributeName: 'phone'
+                KeyType: HASH
+            Projection:
+              ProjectionType: 'ALL'
+        BillingMode: PAY_PER_REQUEST
+        TableName: User_${self:provider.stage, 'dev'}
+
+    ListDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        TableName: List_${self:provider.stage, 'dev'}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: name
+            AttributeType: S
+          - AttributeName: uid
+            AttributeType: S
+
+        KeySchema: # 这个是table 主键定义， or 是一个table index 定义
+          - AttributeName: id
+            KeyType: HASH
+
+        GlobalSecondaryIndexes:
+          - IndexName: 'index_name'
+            KeySchema:
+              - AttributeName: 'name'
+                KeyType: HASH
+            Projection:
+              ProjectionType: 'ALL'
+          - IndexName: 'index_uid'
+            KeySchema:
+              - AttributeName: 'uid'
+                KeyType: HASH
+            Projection:
+              ProjectionType: 'ALL'
+
+    TaskDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        TableName: Task_${self:provider.stage, 'dev'}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: lid
+            AttributeType: S
+          - AttributeName: uid
+            AttributeType: S
+        KeySchema: # 这个是table 主键定义， or 是一个table index 定义
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: 'index_lid'
+            KeySchema:
+              - AttributeName: 'lid'
+                KeyType: HASH
+            Projection:
+              ProjectionType: 'ALL'
+          - IndexName: 'index_uid'
+            KeySchema:
+              - AttributeName: 'uid'
+                KeyType: HASH
+            Projection:
+              ProjectionType: 'ALL'
+
