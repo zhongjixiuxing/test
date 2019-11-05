@@ -1,4 +1,5 @@
-service: wetodos
+service:
+  name: wetodos
 app: wetodos
 org: anxing
 
