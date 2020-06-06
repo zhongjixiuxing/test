@@ -22,7 +22,7 @@
     "superagent-mock": "^3.7.0"
   },
   "dependencies": {
-    "apollo-server-lambda": "^2.9.3",
+    "apollo-server-lambda": "^2.14.2",
     "aws-sdk": "^2.533.0",
     "jsonwebtoken": "^8.5.1",
     "pino": "^5.13.3",
