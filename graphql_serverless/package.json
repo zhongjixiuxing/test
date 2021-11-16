@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "apollo-server-lambda": "^2.9.3",
-    "aws-sdk": "^2.533.0",
+    "aws-sdk": "^2.814.0",
     "jsonwebtoken": "^8.5.1",
     "pino": "^5.13.3",
     "pino-pretty": "^3.2.1",
