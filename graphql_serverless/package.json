@@ -24,7 +24,7 @@
   "dependencies": {
     "apollo-server-lambda": "^2.9.3",
     "aws-sdk": "^2.533.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "pino": "^5.13.3",
     "pino-pretty": "^3.2.1",
     "superagent": "^5.1.0",
